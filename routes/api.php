@@ -17,16 +17,16 @@ Route::post('/logout', [AuthController::class, 'logout'])
 
 // Public routes
 Route::apiResource('events', EventController::class)
-    ->only(['index', 'show']);
+    ->only(['index']);
 
 // Protected routes
 Route::apiResource('events', EventController::class)
-    ->only(['store', 'update', 'destroy'])
+    ->only(['store', 'update', 'destroy','show'])
     ->middleware(['auth:sanctum', 'throttle:api']);
 
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::apiResource('events.attendees', AttendeeController::class)
         ->scoped()
-        ->only(['index','store', 'destroy']);
+        ->only(['index','store', 'destroy', 'show']);
 });
 
