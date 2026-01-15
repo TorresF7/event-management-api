@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+    image: laravel_app_image
     container_name: laravel_app
     working_dir: /var/www
     volumes:
@@ -40,6 +41,40 @@ services:
       MYSQL_PASSWORD: secret #Added MYSQL_PASSWORD
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - laravel
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - laravel
+
+  queue:
+    image: laravel_app_image
+    container_name: laravel_queue
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    command: php artisan queue:work --tries=3 --sleep=3
+    depends_on:
+      - app
+      - mysql
+    networks:
+      - laravel
+  scheduler:
+    image: laravel_app_image
+    container_name: laravel_scheduler
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    command: php artisan schedule:work
+    depends_on:
+      - app
+      - mysql
     networks:
       - laravel
 
