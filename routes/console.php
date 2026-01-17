@@ -10,4 +10,6 @@ Artisan::command('inspire', function () {
 
 Schedule::command('app:send-event-reminders')
             ->dailyAt('07:00')
-            ->timezone('America/Lima');
+            ->timezone('America/Lima')
+            ->onOneServer()
+            ->withoutOverlapping();

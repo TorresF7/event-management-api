@@ -15,9 +15,16 @@ class EventReminderNotification extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      */
-    public function __construct(public Event $event)
+    public function __construct(public int $eventId)
     {
         //
+    }
+
+    public $tries = 3;
+
+    public function backoff(): array
+    {
+        return [60, 300, 600];
     }
 
     /**
@@ -35,12 +42,14 @@ class EventReminderNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
+       $event = Event::findOrFail($this->eventId);
         return (new MailMessage)
-            ->line('Recordatorio: Tienes un evento próximo.')
-            ->action('View Event', route('events.show', $this->event->id))
-            ->line(
-                "El evento es {$this->event->name} empezará {$this->event->start_time}"
-            );
+            ->subject(__('emails.event_reminder.subject'))
+            ->markdown('mail.event-reminder', [
+                'event' => $event,
+                'user' => $notifiable,
+            ]);
+
     }
 
     /**

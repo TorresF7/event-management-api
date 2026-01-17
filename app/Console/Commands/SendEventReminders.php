@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\Models\Event;
 use Illuminate\Support\Str;
 use App\Notifications\EventReminderNotification;
+use App\Actions\SendEventRemindersAction;
 
 class SendEventReminders extends Command
 {
@@ -26,23 +27,14 @@ class SendEventReminders extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(SendEventRemindersAction $action)
     {
-        $events=Event::with('attendees.user')->whereBetween('start_time',[now(),now()->addDay()])->get();
-
-        $eventcount=$events->count();
-        $eventLabel= Str::plural('evento',$eventcount);
-
-        $this->info("Enviando recordatorios para {$eventcount} {$eventLabel}");
-
-        $events->each(fn ($event)=> $event->attendees->each(
-            fn($attendee) => $attendee->user->notify(
-                    new EventReminderNotification(
-                        $event
-                    )
-                )
-            )
-        );
+        Event::with('attendees.user')
+        ->whereNull('reminder_sent_at')
+        ->whereBetween('start_time', [now(), now()->addDay()])
+        ->chunk(50, function ($events) use ($action) {
+            $events->each(fn ($event) => $action->execute($event));
+        });
 
         $this->info('Notificaciones enviadas correctamente.');
     }
